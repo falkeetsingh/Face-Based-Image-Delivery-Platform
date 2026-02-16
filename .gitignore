@@ -1,0 +1,25 @@
+# Dependencies
+**/node_modules/
+
+# Env files
+**/.env
+**/.env.*
+
+# Logs
+**/logs/
+**/*.log
+
+# Build output
+**/dist/
+**/build/
+**/.vite/
+
+# OS files
+.DS_Store
+
+# Test artifacts
+**/coverage/
+
+# Local tooling
+**/.cache/
+**/.turbo/
