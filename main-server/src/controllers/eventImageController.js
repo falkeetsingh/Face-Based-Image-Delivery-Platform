@@ -16,6 +16,10 @@ exports.addEventImages = async (req, res) => {
       return res.status(404).json({ message: "Event not found." });
     }
 
+    if (!event.societyId.equals(req.user.societyId)) {
+      return res.status(403).json({ message: "Event not in your society." });
+    }
+
     // upload to cloudinary
     const imageUrls = await uploadMultipleBuffers(
       files,

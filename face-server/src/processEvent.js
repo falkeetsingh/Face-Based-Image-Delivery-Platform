@@ -1,20 +1,19 @@
-const fs = require('fs');
-const path = require('path');
+const axios = require('axios');
 const { Image } = require('canvas');
 const { faceapi } = require('./config/face-api');
 
 // Thresholds
-const MAX_DISTANCE = 0.75;  // Increased from 0.6 to be more permissive with face matching
-const MIN_CONFIDENCE = 0.5;  // Lowered from 0.6 to detect more faces
+const MAX_DISTANCE = 0.52;
+const MIN_CONFIDENCE = 0.6;
 const IOU_THRESHOLD = 0.3;
+const MIN_FACE_AREA = 3600;
+const AMBIGUITY_MARGIN = 0.04;
 
 async function ProcessEvent(imageUrl, registeredUsers) {
-  const { default: axios } = await import('axios'); // dynamic import for axios
-  
   // Download image with timeout and retry logic
   let response;
   const maxRetries = 3;
-  const timeout = 30000; // 30 seconds
+  const timeout = 15000;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -43,11 +42,21 @@ async function ProcessEvent(imageUrl, registeredUsers) {
   const img = new Image();
   img.src = Buffer.from(response.data);
 
-  // 1️⃣ Detect all faces
-  const detections = await faceapi
-    .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: MIN_CONFIDENCE }))
-    .withFaceLandmarks()
+  // 1️⃣ Detect all faces (tiny detector first for speed, SSD fallback for harder frames)
+  let detections = await faceapi
+    .detectAllFaces(
+      img,
+      new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 })
+    )
+    .withFaceLandmarks(true)
     .withFaceDescriptors();
+
+  if (!detections.length) {
+    detections = await faceapi
+      .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: MIN_CONFIDENCE }))
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+  }
 
   // 2️⃣ Non-Maximum Suppression to remove duplicates
   const sorted = detections
@@ -56,53 +65,94 @@ async function ProcessEvent(imageUrl, registeredUsers) {
 
   const kept = [];
   for (const { det } of sorted) {
+    const area = (det.detection?.box?.width || 0) * (det.detection?.box?.height || 0);
+    if (area < MIN_FACE_AREA) {
+      continue;
+    }
+
     const shouldKeep = kept.every(k => iou(det.detection.box, k.detection.box) < IOU_THRESHOLD);
     if (shouldKeep) kept.push(det);
   }
-
-  // 3️⃣ Build FaceMatcher
-  const labeled = registeredUsers.map(u => new faceapi.LabeledFaceDescriptors(
-    u.userId,
-    [u.descriptor]
-  ));
-  
-  // Create a mapping of userId to name for later lookup
-  const userNameMap = {};
-  registeredUsers.forEach(u => {
-    userNameMap[u.userId] = u.name;
-  });
-  
-  const matcher = new faceapi.FaceMatcher(labeled, MAX_DISTANCE);
 
   // 4️⃣ Match faces
   const usedUsers = new Set();
   const matchedResults = [];
 
+  const distance = (a, b) => {
+    let sum = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      const d = a[i] - b[i];
+      sum += d * d;
+    }
+    return Math.sqrt(sum);
+  };
+
+  const getBestAndSecond = (faceDescriptor) => {
+    const ranked = [];
+
+    for (const user of registeredUsers) {
+      if (!user.descriptors || !user.descriptors.length) {
+        continue;
+      }
+
+      let bestUserDistance = Infinity;
+      for (const known of user.descriptors) {
+        const current = distance(faceDescriptor, known);
+        if (current < bestUserDistance) {
+          bestUserDistance = current;
+        }
+      }
+
+      ranked.push({
+        userId: user.userId,
+        name: user.name,
+        distance: bestUserDistance
+      });
+    }
+
+    ranked.sort((a, b) => a.distance - b.distance);
+    return {
+      best: ranked[0] || null,
+      second: ranked[1] || null
+    };
+  };
+
   for (const [index, det] of kept.entries()) {
-    const best = matcher.findBestMatch(det.descriptor);
-    const label = best.label;
-    const distance = Number(best.distance.toFixed(3));
+    const { best, second } = getBestAndSecond(det.descriptor);
+
+    let matchedUserId = null;
+    let matchedName = null;
+    let matchedDistance = best ? Number(best.distance.toFixed(3)) : null;
+
+    if (best && best.distance <= MAX_DISTANCE) {
+      const clearlyBetter = !second || (second.distance - best.distance) >= AMBIGUITY_MARGIN;
+      if (clearlyBetter) {
+        matchedUserId = best.userId;
+        matchedName = best.name;
+      }
+    }
 
     // Avoid duplicate users in the same image
-    if (label !== 'unknown' && usedUsers.has(label)) {
-      matchedResults.push({ 
-        faceIndex: index, 
-        userId: null,  // Skip duplicate - mark as unknown
+    if (matchedUserId && usedUsers.has(matchedUserId)) {
+      matchedResults.push({
+        faceIndex: index,
+        userId: null,
         name: null,
-        distance,
+        distance: matchedDistance,
         imageUrl
       });
       continue;
     }
 
-    if (label !== 'unknown') usedUsers.add(label);
+    if (matchedUserId) {
+      usedUsers.add(matchedUserId);
+    }
 
-    // Return objects that can directly map to FaceMatch model
     matchedResults.push({
       faceIndex: index,
-      userId: label !== 'unknown' ? label : null,
-      name: label !== 'unknown' ? userNameMap[label] : null,
-      distance,
+      userId: matchedUserId,
+      name: matchedName,
+      distance: matchedDistance,
       imageUrl
     });
   }

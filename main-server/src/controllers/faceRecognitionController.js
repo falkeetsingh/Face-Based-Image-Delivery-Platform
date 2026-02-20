@@ -26,6 +26,10 @@ exports.runFaceRecognition = async (req, res) => {
             return res.status(404).json({ message: "Event not found." });
         }
 
+        if (!event.societyId.equals(req.user.societyId)) {
+            return res.status(403).json({ message: "Event not in your society." });
+        }
+
         const imageUrls = eventImages.map(img => img.imageUrl);
 
         //call face recognition server
@@ -46,7 +50,7 @@ exports.runFaceRecognition = async (req, res) => {
             // Find user by faceProfileId (which is the userId from face server)
             const user = await User.findOne({ faceProfileId: match.userId });
 
-            if (user) {
+            if (user && user.status === "active" && user.societyId?.equals(event.societyId)) {
                 inserts.push({
                     eventId: eventId,
                     userId: user._id,
@@ -54,7 +58,7 @@ exports.runFaceRecognition = async (req, res) => {
                     distance: match.distance
                 });
             } else {
-                console.warn(`User with faceProfileId "${match.userId}" from face server not found in main server`);
+                console.warn(`User with faceProfileId "${match.userId}" not eligible for event ${eventId}`);
             }
         }
 

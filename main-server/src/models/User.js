@@ -7,6 +7,9 @@ const UserSchema = new mongoose.Schema({
     faceProfileId: { type: String },
     password:{type: String, required: true},
     socieities:[{type: mongoose.Schema.Types.ObjectId, ref: 'Society'}],
+    societyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Society', default: null },
+    role: { type: String, enum: ['admin', 'member'], default: null },
+    status: { type: String, enum: ['pending', 'active', 'rejected'], default: 'pending' },
     date:{type: Date, default: Date.now}
 });
 

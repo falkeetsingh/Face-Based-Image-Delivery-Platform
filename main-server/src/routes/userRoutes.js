@@ -2,6 +2,7 @@ const express = require("express");
 const authController = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
+const { requireActiveMember } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.post("/login", authController.login);
 
 // Protected routes
 router.get("/profile", authMiddleware, authController.getProfile);
-router.get("/me/matches", authMiddleware, authController.getMyMatches);
+router.get("/me/matches", authMiddleware, requireActiveMember, authController.getMyMatches);
 router.post("/logout", authMiddleware, authController.logout);
 
 module.exports = router;

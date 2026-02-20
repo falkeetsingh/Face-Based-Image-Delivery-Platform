@@ -1,9 +1,16 @@
 const express = require("express");
-const router = express.Router();
-const { createEvent } = require("../controllers/eventController");
 const authMiddleware = require("../middleware/authMiddleware");
 const { requireActiveMember, requireAdmin } = require("../middleware/roleMiddleware");
+const {
+  createEvent,
+  listSocietyEvents,
+  getEventDetails
+} = require("../controllers/eventController");
 
+const router = express.Router();
+
+router.get("/", authMiddleware, requireActiveMember, listSocietyEvents);
 router.post("/", authMiddleware, requireActiveMember, requireAdmin, createEvent);
+router.get("/:eventId", authMiddleware, requireActiveMember, getEventDetails);
 
 module.exports = router;

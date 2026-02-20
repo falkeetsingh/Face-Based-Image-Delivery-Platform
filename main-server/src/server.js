@@ -25,8 +25,12 @@ app.get('/health', (req, res) => {
 // User authentication routes
 app.use("/api/users", require("./routes/userRoutes"));
 
+// Society routes
+app.use("/api/societies", require("./routes/societyRoutes"));
+
 // Event routes
 app.use("/api/create-events", require("./routes/eventRoutes"));
+app.use("/api/events", require("./routes/eventCoreRoutes"));
 app.use('/api/events', require('./routes/eventImageRoutes'));
 app.use('/api/events', require('./routes/faceRecognitionRoutes'));
 

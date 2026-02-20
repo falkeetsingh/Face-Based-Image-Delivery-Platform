@@ -16,11 +16,15 @@ async function recognizeEvent(req, res) {
 
         //load all registered users and their face descriptors
         const users = await User.find({});
-        const registeredUsers = users.map(u => ({
-            userId: u.userId,
-            name: u.name,
-            descriptor: u.faceDescriptors[0] ? new Float32Array(u.faceDescriptors[0]) : null
-        })).filter(u => u.descriptor);
+        const registeredUsers = users
+            .map(u => ({
+                userId: u.userId,
+                name: u.name,
+                descriptors: (u.faceDescriptors || [])
+                    .filter(desc => Array.isArray(desc) && desc.length === 128)
+                    .map(desc => new Float32Array(desc))
+            }))
+            .filter(u => u.descriptors.length > 0);
 
         if (registeredUsers.length === 0) {
             return res.status(400).json({ message: "No registered users with face descriptors found" });

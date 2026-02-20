@@ -47,12 +47,30 @@ export const logoutUser = () =>
 
 export const getProfile = () => request("/api/users/profile");
 
+export const getSociety = () => request("/api/societies/me");
+
+export const listJoinRequests = () => request("/api/societies/requests");
+
+export const approveJoinRequest = (requestId) =>
+  request(`/api/societies/requests/${requestId}/approve`, {
+    method: "POST"
+  });
+
+export const rejectJoinRequest = (requestId) =>
+  request(`/api/societies/requests/${requestId}/reject`, {
+    method: "POST"
+  });
+
 export const createEvent = (payload) =>
-  request("/api/create-events", {
+  request("/api/events", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+export const listEvents = () => request("/api/events");
+
+export const getEventDetails = (eventId) => request(`/api/events/${eventId}`);
 
 export const uploadEventImages = (eventId, files) => {
   const formData = new FormData();

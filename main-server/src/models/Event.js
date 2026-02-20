@@ -6,6 +6,15 @@ const EventSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  date: {
+    type: Date,
+    default: null
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: ""
+  },
   societyId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,

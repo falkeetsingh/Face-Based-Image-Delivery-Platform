@@ -17,7 +17,9 @@ async function LoadModels() {
     await tf.setBackend('cpu');
     await tf.ready();
     await faceapi.nets.ssdMobilenetv1.loadFromDisk(modelPath);
+    await faceapi.nets.tinyFaceDetector.loadFromDisk(modelPath);
     await faceapi.nets.faceLandmark68Net.loadFromDisk(modelPath);
+    await faceapi.nets.faceLandmark68TinyNet.loadFromDisk(modelPath);
     await faceapi.nets.faceRecognitionNet.loadFromDisk(modelPath);
 
     modelsLoaded = true;

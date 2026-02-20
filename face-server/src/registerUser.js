@@ -12,14 +12,49 @@ async function registerUserFace(userId, imageUrl, name = null) {
   const img = new Image();
   img.src = Buffer.from(response.data);
 
-  // Detect single face
-  const detection = await faceapi
-    .detectSingleFace(img)
+  const selectBestFace = (detections) => {
+    if (!detections || !detections.length) {
+      return null;
+    }
+
+    return detections
+      .slice()
+      .sort((a, b) => {
+        const areaA = (a.detection?.box?.width || 0) * (a.detection?.box?.height || 0);
+        const areaB = (b.detection?.box?.width || 0) * (b.detection?.box?.height || 0);
+        if (areaB !== areaA) {
+          return areaB - areaA;
+        }
+
+        const scoreA = a.detection?.score || 0;
+        const scoreB = b.detection?.score || 0;
+        return scoreB - scoreA;
+      })[0];
+  };
+
+  // Strategy 1: SSD detector with relaxed confidence
+  let detections = await faceapi
+    .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
     .withFaceLandmarks()
-    .withFaceDescriptor();
+    .withFaceDescriptors();
+
+  let detection = selectBestFace(detections);
+
+  // Strategy 2: Tiny face detector fallback for difficult images
+  if (!detection) {
+    detections = await faceapi
+      .detectAllFaces(
+        img,
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 })
+      )
+      .withFaceLandmarks(true)
+      .withFaceDescriptors();
+
+    detection = selectBestFace(detections);
+  }
 
   if (!detection) {
-    throw new Error('No face detected in image');
+    throw new Error('No face detected in image. Try a clear, front-facing image with good lighting.');
   }
 
   //Convert descriptor to normal array

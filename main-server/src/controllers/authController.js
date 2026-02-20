@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const FaceMatch = require("../models/FaceMatch");
+const Society = require("../models/Society");
+const JoinRequest = require("../models/JoinRequest");
 const faceServer = require("../config/axios");
 const { uploadSingleBuffer } = require("../services/cloudinaryService");
 const jwt = require("jsonwebtoken");
@@ -11,10 +13,28 @@ const generateToken = (userId) => {
     });
 };
 
+const generateSocietyCode = async () => {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+        let code = "";
+        for (let i = 0; i < 6; i += 1) {
+            code += alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+
+        const exists = await Society.findOne({ code });
+        if (!exists) {
+            return code;
+        }
+    }
+
+    throw new Error("Failed to generate unique society code");
+};
+
 // Register User with Face Recognition
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, imageUrl } = req.body;
+        const { name, email, password, imageUrl, societyAction, societyName, societyCode } = req.body;
         const imageFile = req.file || null;
 
         // Validate input
@@ -22,6 +42,18 @@ exports.register = async (req, res) => {
             return res.status(400).json({
                 message: "name, email, password, and a face image are required"
             });
+        }
+
+        if (!societyAction || !["create", "join"].includes(societyAction)) {
+            return res.status(400).json({ message: "societyAction must be create or join" });
+        }
+
+        if (societyAction === "create" && !societyName) {
+            return res.status(400).json({ message: "societyName is required" });
+        }
+
+        if (societyAction === "join" && !societyCode) {
+            return res.status(400).json({ message: "societyCode is required" });
         }
 
         // Check if user already exists
@@ -56,6 +88,37 @@ exports.register = async (req, res) => {
 
             // Store the faceProfileId (userId from face server in main server)
             user.faceProfileId = user._id.toString();
+
+            let society = null;
+            if (societyAction === "create") {
+                const code = await generateSocietyCode();
+                society = await Society.create({
+                    name: societyName,
+                    code,
+                    admin: user._id,
+                    members: [user._id]
+                });
+
+                user.societyId = society._id;
+                user.role = "admin";
+                user.status = "active";
+            } else {
+                society = await Society.findOne({ code: societyCode });
+                if (!society) {
+                    await User.deleteOne({ _id: user._id });
+                    return res.status(404).json({ message: "Society not found" });
+                }
+
+                await JoinRequest.create({
+                    societyId: society._id,
+                    userId: user._id
+                });
+
+                user.societyId = society._id;
+                user.role = "member";
+                user.status = "pending";
+            }
+
             await user.save();
 
             // Generate JWT token
@@ -75,8 +138,18 @@ exports.register = async (req, res) => {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    faceProfileId: user.faceProfileId
-                }
+                    faceProfileId: user.faceProfileId,
+                    role: user.role,
+                    status: user.status,
+                    societyId: user.societyId
+                },
+                society: society
+                    ? {
+                        id: society._id,
+                        name: society.name,
+                        code: society.code
+                    }
+                    : null
             });
         } catch (faceErr) {
             // If face registration fails, delete the user from main server
@@ -131,14 +204,28 @@ exports.login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
+        const society = user.societyId
+            ? await Society.findById(user.societyId).select("name code")
+            : null;
+
         res.json({
             message: "Login successful",
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                faceProfileId: user.faceProfileId
-            }
+                faceProfileId: user.faceProfileId,
+                role: user.role,
+                status: user.status,
+                societyId: user.societyId
+            },
+            society: society
+                ? {
+                    id: society._id,
+                    name: society.name,
+                    code: society.code
+                }
+                : null
         });
     } catch (err) {
         console.error("Login error:", err);
@@ -157,9 +244,20 @@ exports.getProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
+        const society = user.societyId
+            ? await Society.findById(user.societyId).select("name code")
+            : null;
+
         res.json({
             message: "Profile retrieved",
-            user
+            user,
+            society: society
+                ? {
+                    id: society._id,
+                    name: society.name,
+                    code: society.code
+                }
+                : null
         });
     } catch (err) {
         console.error("Get profile error:", err);
