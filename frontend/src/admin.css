@@ -1,0 +1,302 @@
+/* Role Tags */
+.role-tag {
+    background: white;
+    color: black;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.role-tag.admin {
+    background: white;
+    /* Matching mockup */
+}
+
+/* Admin Dashboard Specific */
+.admin-dashboard {
+    max-width: 100%;
+}
+
+.admin-top-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.admin-box {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-box h3 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+    color: white;
+}
+
+.admin-box>p.muted {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 20px 0;
+}
+
+.admin-box .form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-box .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-box .input-group label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.admin-box input,
+.admin-box textarea {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: white;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.admin-box input:focus,
+.admin-box textarea:focus {
+    outline: none;
+    border-color: white;
+}
+
+.split-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.btn-pink {
+    background: #eeeeee;
+    /* Exact matching orange */
+    color: black;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-pink:hover {
+    background: #B5004F;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.dashboard-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.dashboard-card-btn-outline {
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.dashboard-card-btn-outline:hover {
+    transform: translateY(-2px);
+    background: #f0f0f0;
+}
+
+.dashboard-card-btn-outline.secondary {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dashboard-card-btn-outline.secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-box .request-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-box .request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 16px;
+    border-radius: 12px;
+}
+
+.admin-box .request-item strong {
+    display: block;
+    font-weight: 500;
+    color: white;
+}
+
+.admin-box .request-item p {
+    margin: 2px 0 0 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-box .request-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-box .request-actions button {
+    background: white;
+    color: black;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-box .request-actions button.ghost {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.admin-box .request-actions button.ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.event-workspace-header-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.event-workspace-actions-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.event-workspace-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.event-workspace-images-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.event-workspace-images-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+}
+
+.event-workspace-dashboard-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make calendar icon white for date inputs */
+.admin-box input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* Responsive Overrides */
+.admin-dashboard .dashboard-scroll-row {
+    flex-wrap: wrap;
+    overflow-x: visible;
+}
+
+.admin-dashboard .dashboard-card {
+    flex: 1 1 280px;
+}
+
+@media (max-width: 768px) {
+
+    .admin-top-grid,
+    .split-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .event-workspace-header-grid {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .event-workspace-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .event-workspace-actions-row form {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .event-workspace-actions-row .custom-file-wrapper,
+    .event-workspace-header-grid .custom-file-wrapper {
+        width: 100% !important;
+    }
+}
+/* Image Deletion Checkbox styles */
+.event-workspace-dashboard-card {
+    position: relative;
+}
+
+.image-delete-checkbox {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    z-index: 10;
+    accent-color: #B5004F;
+}

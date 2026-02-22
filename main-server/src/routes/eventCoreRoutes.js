@@ -4,7 +4,8 @@ const { requireActiveMember, requireAdmin } = require("../middleware/roleMiddlew
 const {
   createEvent,
   listSocietyEvents,
-  getEventDetails
+  getEventDetails,
+  deleteEvent
 } = require("../controllers/eventController");
 
 const router = express.Router();
@@ -12,5 +13,6 @@ const router = express.Router();
 router.get("/", authMiddleware, requireActiveMember, listSocietyEvents);
 router.post("/", authMiddleware, requireActiveMember, requireAdmin, createEvent);
 router.get("/:eventId", authMiddleware, requireActiveMember, getEventDetails);
+router.delete("/:eventId", authMiddleware, requireActiveMember, requireAdmin, deleteEvent);
 
 module.exports = router;

@@ -34,7 +34,7 @@ app.use("/api/events", require("./routes/eventCoreRoutes"));
 app.use('/api/events', require('./routes/eventImageRoutes'));
 app.use('/api/events', require('./routes/faceRecognitionRoutes'));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 if (require.main === module) {
 	connectDB();
 	app.listen(PORT, () => console.log(`Main Server running on port : ${PORT}`));

@@ -72,6 +72,10 @@ export const listEvents = () => request("/api/events");
 
 export const getEventDetails = (eventId) => request(`/api/events/${eventId}`);
 
+export const deleteEvent = (eventId) => request(`/api/events/${eventId}`, {
+  method: "DELETE"
+});
+
 export const uploadEventImages = (eventId, files) => {
   const formData = new FormData();
   files.forEach((file) => formData.append("images", file));
@@ -81,6 +85,13 @@ export const uploadEventImages = (eventId, files) => {
     body: formData
   });
 };
+
+export const deleteEventImages = (eventId, imageIds) =>
+  request(`/api/events/${eventId}/images`, {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ imageIds })
+  });
 
 export const runRecognition = (eventId) =>
   request(`/api/events/${eventId}/recognize`, {

@@ -1,0 +1,661 @@
+/* MOSAIC Specific Styles */
+:root {
+    --mosaic-bg: #0a0a0a;
+    --mosaic-text: #ffffff;
+    --mosaic-accent: #ff0095;
+}
+
+body.mosaic-active {
+    background: var(--mosaic-bg) !important;
+    color: var(--mosaic-text) !important;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    /* Light for text sections */
+    overflow: hidden;
+    /* Prevent body scroll, handled by container */
+}
+
+/* Typography Overrides for Pixelify Sans */
+.pixel-font {
+    font-family: 'Pixelify Sans', sans-serif !important;
+}
+
+/* GlassSurface styles */
+.glass-surface {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* FaultyTerminal fallback styles */
+.faulty-terminal-fallback {
+    background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+    overflow: hidden;
+}
+
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.1));
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.mosaic-scroll-container {
+    height: 100vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    position: relative;
+}
+
+.mosaic-static-bg-wrapper {
+    background-image: url('../assets/BlackBG.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    width: 100%;
+    /* To ensure there is no bleed over */
+    overflow: hidden;
+    position: relative;
+}
+
+.mosaic-static-bg-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 25vh;
+    background: linear-gradient(to bottom, #0a0a0a, transparent);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.mosaic-section {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+/* Header */
+.mosaic-header-container {
+    position: fixed;
+    top: 30px;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+}
+
+.mosaic-header-pill {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    width: min(600px, 90vw);
+    height: 52px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.mosaic-logo {
+    font-weight: 400;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.mosaic-logo sup {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 400;
+    margin-top: 0.45rem;
+    line-height: 1;
+    letter-spacing: 0em;
+}
+
+.mosaic-logo-img {
+    height: clamp(1.2rem, 2.5vw, 1.8rem);
+    width: auto;
+}
+
+.mosaic-nav {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.mosaic-nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.mosaic-nav-link:hover {
+    color: white;
+}
+
+/* Typography & Hero */
+.mosaic-title {
+    font-size: clamp(2rem, 3.8vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    letter-spacing: 0em;
+    max-width: 1000px;
+    margin-bottom: 2rem;
+    color: white;
+    z-index: 10;
+}
+
+.mosaic-subtitle {
+    font-size: clamp(1rem, 1.4vw, 1.25rem);
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    max-width: 800px;
+    margin-bottom: 3rem;
+    line-height: 1.5;
+    z-index: 10;
+}
+
+.mosaic-hero-actions {
+    display: flex;
+    gap: 1.5rem;
+    z-index: 10;
+}
+
+.mosaic-btn-primary {
+    background: white;
+    color: black;
+    border: none;
+    padding: 0.85rem 2.8rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mosaic-btn-primary:hover {
+    transform: translateY(-2px);
+    background: #f5f5f5;
+}
+
+.mosaic-btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.85rem 2.8rem;
+    font-size: 1rem;
+    font-weight: 400;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.mosaic-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Intro Section */
+.mosaic-intro-text {
+    font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+    font-weight: 300;
+    text-align: center;
+    max-width: 900px;
+    line-height: 1.5;
+    z-index: 10;
+    color: white;
+}
+
+.mosaic-intro-text>span {
+    display: block;
+    margin-top: 2.5rem;
+    color: white;
+}
+
+/* How It Works Section */
+.mosaic-section-title {
+    font-size: 3rem;
+    font-weight: 400;
+    margin-bottom: 4rem;
+    text-align: center;
+}
+
+.mosaic-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    padding: 0 2rem;
+}
+
+@media (max-width: 767px) {
+    .mosaic-cards-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+/* 768px+ (Tablets) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .mosaic-header-pill {
+        width: 85vw;
+        padding: 0 1.5rem;
+    }
+
+    .mosaic-nav {
+        gap: 1.5rem;
+    }
+
+    .mosaic-title {
+        font-size: 2.2rem;
+    }
+
+    .mosaic-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .mosaic-intro-text {
+        font-size: 1.8rem;
+    }
+
+    #intro::before,
+    #intro::after {
+        width: 60vh;
+        height: 60vh;
+    }
+
+    .mosaic-section-title {
+        font-size: 2.5rem;
+    }
+
+    .mosaic-cards-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        max-width: 95vw;
+        padding: 0 1rem;
+    }
+
+    .mosaic-step-card {
+        padding: 2rem 1rem;
+    }
+
+    .mosaic-step-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .mosaic-step-desc {
+        font-size: 0.95rem;
+    }
+
+    .mosaic-cta-title {
+        font-size: 2.8rem;
+    }
+}
+
+/* 1024px+ (Laptops) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .mosaic-header-pill {
+        width: 65vw;
+    }
+
+    .mosaic-cards-container {
+        gap: 1.5rem;
+        max-width: 1000px;
+    }
+
+    .mosaic-step-card {
+        padding: 3rem 2rem;
+    }
+
+    .mosaic-section-title {
+        font-size: 2.8rem;
+    }
+}
+
+/* 1280px - 1440px+ (Standard Desktop) */
+@media (min-width: 1280px) and (max-width: 1919px) {
+    .mosaic-cards-container {
+        max-width: 1200px;
+    }
+}
+
+/* 1920px+ (Full HD) */
+@media (min-width: 1920px) {
+    .mosaic-header-pill {
+        width: 800px;
+        height: 64px;
+        padding: 0 3rem;
+    }
+
+    .mosaic-logo {
+        font-size: 1.8rem;
+    }
+
+    .mosaic-nav-link {
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+
+    .mosaic-title {
+        font-size: 4.5rem;
+        max-width: 1400px;
+    }
+
+    .mosaic-subtitle {
+        font-size: 1.8rem;
+        max-width: 1000px;
+    }
+
+    .mosaic-btn-primary,
+    .mosaic-btn-secondary {
+        padding: 1rem 3.5rem;
+        font-size: 1.2rem;
+    }
+
+    .mosaic-intro-text {
+        font-size: 3.5rem;
+        max-width: 1200px;
+    }
+
+    .mosaic-section-title {
+        font-size: 3.5rem;
+    }
+
+    .mosaic-cards-container {
+        max-width: 1600px;
+        gap: 3rem;
+    }
+
+    .mosaic-step-card {
+        padding: 4.5rem 3.5rem;
+    }
+
+    .mosaic-step-title {
+        font-size: 3rem;
+    }
+
+    .mosaic-step-desc {
+        font-size: 1.4rem;
+    }
+
+    .mosaic-cta-title {
+        font-size: 5rem;
+        max-width: 1200px;
+    }
+
+    .mosaic-cta-subtitle {
+        font-size: 1.6rem;
+    }
+}
+
+.mosaic-step-card {
+    padding: 3.5rem 2.5rem;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.3s ease;
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.mosaic-step-card:hover {
+    transform: translateY(-10px);
+}
+
+.mosaic-step-title {
+    font-size: 2.2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+    color: white;
+}
+
+.mosaic-step-desc {
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
+    font-size: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+/* CTA Section */
+.mosaic-cta-content {
+    text-align: center;
+    max-width: 800px;
+}
+
+.mosaic-cta-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+}
+
+.mosaic-cta-subtitle {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 3rem;
+    line-height: 1.6;
+}
+
+/* CTA Button specific hover effect */
+.mosaic-cta-btn {
+    position: relative;
+    overflow: hidden;
+    color: black;
+    background-color: white;
+    z-index: 1;
+    transition: color 600ms ease, transform 0.3s ease, background-color 600ms ease !important;
+}
+
+.mosaic-cta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../assets/GetStartedButtonBG.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 400ms ease;
+    z-index: -1;
+    border-radius: 999px;
+    /* Because button is pill shape */
+}
+
+/* Override default button hover to make background transparent so ::before Image shows */
+.mosaic-cta-btn:hover {
+    background-color: transparent !important;
+    color: white !important;
+}
+
+.mosaic-cta-btn:hover::before {
+    opacity: 1;
+}
+
+/* Footer Section */
+.mosaic-footer-section {
+    min-height: auto;
+    background-color: #f5f2eb;
+    padding: 6vw 0 2vw 0;
+    justify-content: flex-end;
+}
+
+.mosaic-footer-container {
+    width: 100%;
+    max-width: 90vw;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Red Banner */
+.mosaic-footer-banner {
+    background-color: #c20054;
+    border-radius: 2.5vw;
+    padding: 2.5vw 4vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3vw;
+}
+
+.mosaic-footer-banner-text {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+}
+
+.mosaic-footer-logo {
+    font-size: 15vw;
+    color: white;
+    line-height: 1;
+    letter-spacing: 0.02em;
+}
+
+.mosaic-footer-beta {
+    font-size: 5.5vw;
+    color: white;
+    margin-top: 0.5vw;
+    margin-left: 2vw;
+    line-height: 1;
+}
+
+/* Main Content */
+.mosaic-footer-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2vw;
+    padding: 0 1vw;
+}
+
+.mosaic-footer-devs {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5vw;
+}
+
+.dev-label {
+    font-size: 1.8vw;
+    color: #1a1a1a;
+    font-weight: 300;
+}
+
+.dev-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8vw;
+    margin-top: 0.2vw;
+}
+
+.dev-item {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+}
+
+.dev-bullet {
+    width: 1.8vw;
+    height: 1.8vw;
+    background-color: #c20054;
+    border-radius: 50%;
+}
+
+.dev-name {
+    font-size: 1.8vw;
+    color: #1a1a1a;
+    font-weight: 400;
+}
+
+/* Socials */
+.mosaic-footer-socials {
+    display: flex;
+    gap: 1.5vw;
+}
+
+.mosaic-footer-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.mosaic-footer-socials a:hover {
+    transform: scale(1.1);
+}
+
+.social-icon {
+    width: 4vw;
+    height: 4vw;
+    /* CSS filter to turn black SVG to #c20054 (assuming black SVGs) */
+    filter: invert(13%) sepia(85%) saturate(5426%) hue-rotate(333deg) brightness(84%) contrast(110%);
+}
+
+/* Divider */
+.mosaic-footer-divider {
+    width: 100%;
+    border-top: 0.15vw dashed #c20054;
+    margin-bottom: 1.5vw;
+}
+
+/* Legal */
+.mosaic-footer-legal {
+    display: flex;
+    justify-content: flex-end;
+    gap: 3vw;
+    padding: 0 1vw;
+}
+
+.legal-link {
+    font-size: 1.5vw;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.legal-link:hover {
+    text-decoration: underline;
+}
