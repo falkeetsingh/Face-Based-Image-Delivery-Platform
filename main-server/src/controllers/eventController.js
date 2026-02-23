@@ -93,3 +93,32 @@ exports.getEventDetails = async (req, res) => {
     res.status(500).json({ message: "Failed to load event details." });
   }
 };
+
+exports.deleteEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ message: "Invalid eventId." });
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found." });
+    }
+
+    if (!event.societyId.equals(req.user.societyId)) {
+      return res.status(403).json({ message: "Event not in your society." });
+    }
+
+    // Delete Event, Images, and FaceMatches associated to it
+    await Event.deleteOne({ _id: eventId });
+    await EventImage.deleteMany({ eventId });
+    await FaceMatch.deleteMany({ eventId });
+
+    res.json({ message: "Event deleted successfully." });
+  } catch (err) {
+    console.error("Delete event failed:", err);
+    res.status(500).json({ message: "Failed to delete event." });
+  }
+};
