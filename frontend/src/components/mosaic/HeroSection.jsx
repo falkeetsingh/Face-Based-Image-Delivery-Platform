@@ -1,7 +1,8 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import '../../styles/mosaic.css';
 
-const FaultyTerminal = lazy(() => import('../reactbits/FaultyTerminal'));
+const terminalPromise = import('../reactbits/FaultyTerminal');
+const FaultyTerminal = lazy(() => terminalPromise);
 
 const HeroSection = () => {
     const [showTerminal, setShowTerminal] = useState(false);
@@ -43,7 +44,7 @@ const HeroSection = () => {
         <section className="mosaic-section" id="hero" style={{ padding: 0 }}>
             <div style={{ width: '100%', height: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {showTerminal ? (
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, background: 'radial-gradient(circle at center, #2e0018 0%, #050505 80%)' }} />}>
                         <FaultyTerminal
                             scale={1.5}
                             gridMul={[2, 1]}

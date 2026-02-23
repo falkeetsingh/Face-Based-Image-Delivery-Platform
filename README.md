@@ -151,6 +151,8 @@ Both face-server write endpoints can be protected with `x-internal-key` when `IN
 ### E. Frontend Delivery Optimization
 - **Code splitting via `React.lazy` + `Suspense`** for route-level bundles.
 - **Centralized request utility with timeout + normalized error mapping** for resilient UX.
+- **Optimized Font Loading**: Asynchronous preloading and fallback mechanisms for Google Fonts to prevent render-blocking.
+- **Eager WebGL Loading**: Immediate background downloading of heavy WebGL/Three.js bundles combined with instant CSS gradients for placeholders, drastically reducing Largest Contentful Paint (LCP).
 
 ---
 
