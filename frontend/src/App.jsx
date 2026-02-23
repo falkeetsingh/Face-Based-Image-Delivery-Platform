@@ -41,13 +41,22 @@ const convertImageToJpeg = (file) => {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
+        const MAX_DIMENSION = 1920;
+        const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
+        const targetWidth = Math.max(1, Math.round(img.width * scale));
+        const targetHeight = Math.max(1, Math.round(img.height * scale));
+
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         canvas.toBlob((blob) => {
           if (!blob) {
             resolve(file);
@@ -66,6 +75,33 @@ const convertImageToJpeg = (file) => {
     reader.onerror = () => resolve(file);
     reader.readAsDataURL(file);
   });
+};
+
+const convertImagesWithConcurrency = async (files, maxConcurrent = 3) => {
+  const safeConcurrency = Math.max(1, maxConcurrent);
+  const convertedFiles = new Array(files.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+
+      if (currentIndex >= files.length) {
+        return;
+      }
+
+      convertedFiles[currentIndex] = await convertImageToJpeg(files[currentIndex]);
+    }
+  };
+
+  const workers = Array.from(
+    { length: Math.min(safeConcurrency, files.length) },
+    () => worker()
+  );
+
+  await Promise.all(workers);
+  return convertedFiles;
 };
 
 const StatusBanner = ({ status }) => {
@@ -334,7 +370,7 @@ const App = () => {
 
     setBusy("upload");
     try {
-      files = await Promise.all(files.map(f => convertImageToJpeg(f)));
+      files = await convertImagesWithConcurrency(files, 3);
 
       const data = await uploadEventImages(selectedEventId, files);
       setInfo(`Uploaded ${data.count} images.`);

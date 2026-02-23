@@ -8,15 +8,38 @@ const buildUrl = (path) => {
 };
 
 const request = async (path, options = {}) => {
-  const res = await fetch(buildUrl(path), {
-    credentials: "include",
-    ...options
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  let res;
+  try {
+    res = await fetch(buildUrl(path), {
+      credentials: "include",
+      signal: controller.signal,
+      ...options
+    });
+  } catch (error) {
+    clearTimeout(timeout);
+    if (error.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    throw new Error("Network error. Please check if backend servers are running.");
+  }
+
+  clearTimeout(timeout);
 
   const isJson = res.headers.get("content-type")?.includes("application/json");
   const data = isJson ? await res.json() : null;
 
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Unauthorized. Please log in again.");
+    }
+
+    if (res.status === 403) {
+      throw new Error(data?.message || "Forbidden. You don't have access to this action.");
+    }
+
     const message = data?.message || data?.error || res.statusText;
     throw new Error(message);
   }
