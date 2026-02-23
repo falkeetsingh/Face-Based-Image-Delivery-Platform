@@ -3,12 +3,13 @@ const authController = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
 const { requireActiveMember } = require("../middleware/roleMiddleware");
+const { authRateLimiter } = require("../middleware/securityMiddleware");
 
 const router = express.Router();
 
 // Public routes
-router.post("/register", upload.single("image"), authController.register);
-router.post("/login", authController.login);
+router.post("/register", authRateLimiter, upload.single("image"), authController.register);
+router.post("/login", authRateLimiter, authController.login);
 
 // Protected routes
 router.get("/profile", authMiddleware, authController.getProfile);

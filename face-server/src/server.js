@@ -2,6 +2,7 @@ const express = require('express');
 const { LoadModels } = require('./config/face-api.js');
 require('dotenv').config();
 const connectDB = require('./config/db');
+const verifyInternalApiKey = require('./middleware/internalApiKey');
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.get('/health', (req, res) => {
 
 //face enrollement endpoint
 const registerUserFace = require('./registerUser');
-app.post('/api/users/register-face', async (req, res) => {
+app.post('/api/users/register-face', verifyInternalApiKey, async (req, res) => {
   try {
     const { userId, imageUrl, name } = req.body;
 
@@ -41,7 +42,7 @@ app.post('/api/users/register-face', async (req, res) => {
 
 //event recognition endpoint
 const recognizeEvent = require('./recognizeEvent');
-app.post('/api/events/recognize', recognizeEvent);
+app.post('/api/events/recognize', verifyInternalApiKey, recognizeEvent);
 
 async function start() {
   await connectDB();

@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
-const upload = require("./middleware/upload");
+const { generalRateLimiter, secureHeaders } = require("./middleware/securityMiddleware");
 
 const app = express();
 
@@ -13,6 +13,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.disable("x-powered-by");
+app.use(secureHeaders);
+app.use(generalRateLimiter);
 app.use(express.json());
 app.use(cookieParser());
 
