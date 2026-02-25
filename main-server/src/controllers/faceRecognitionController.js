@@ -1,15 +1,18 @@
 const EventImage = require("../models/EventImage");
-const FaceMatch = require("../models/FaceMatch");
-const User = require("../models/User");
 const Event = require("../models/Event");
-const faceServer = require("../config/axios");
+const RecognitionJob = require("../models/RecognitionJob");
+const { getFaceRecognitionQueue } = require("../queues/faceRecognitionQueue");
 
-exports.runFaceRecognition = async (req, res) => {
+const mongoose = require("mongoose");
+
+exports.enqueueFaceRecognition = async (req, res) => {
     try {
+        const faceRecognitionQueue = getFaceRecognitionQueue();
         const { eventId } = req.params;
+        const force = String(req.query.force || "false").toLowerCase() === "true";
 
         //validate eventId is valid ObjectId
-        if (!require("mongoose").Types.ObjectId.isValid(eventId)) {
+        if (!mongoose.Types.ObjectId.isValid(eventId)) {
             return res.status(400).json({ message: "Invalid eventId format." });
         }
 
@@ -31,57 +34,170 @@ exports.runFaceRecognition = async (req, res) => {
         }
 
         const imageUrls = eventImages.map(img => img.imageUrl);
+        const jobId = `recognize-${eventId}`;
+        const existingJob = await faceRecognitionQueue.getJob(jobId);
 
-        //call face recognition server
-        const { data } = await faceServer.post("/api/events/recognize", {
-            eventId,
-            imageUrls
-        });
-
-        const { matchedUsers } = data;
-
-        if (!matchedUsers || matchedUsers.length === 0) {
-            return res.status(200).json({ message: "No faces recognized in this event.", matches: [] });
-        }
-
-        //Convert matched userIds from face server to main server user records
-        const inserts = [];
-        for (const match of matchedUsers) {
-            // Find user by faceProfileId (which is the userId from face server)
-            const user = await User.findOne({ faceProfileId: match.userId });
-
-            if (user && user.status === "active" && user.societyId?.equals(event.societyId)) {
-                inserts.push({
-                    eventId: eventId,
-                    userId: user._id,
-                    imageUrl: match.imageUrl,
-                    distance: match.distance
+        if (existingJob && !force) {
+            const currentState = await existingJob.getState();
+            if (["waiting", "active", "delayed", "prioritized"].includes(currentState)) {
+                return res.status(202).json({
+                    message: "Recognition job already queued or running for this event.",
+                    jobId,
+                    status: currentState
                 });
-            } else {
-                console.warn(`User with faceProfileId "${match.userId}" not eligible for event ${eventId}`);
+            }
+
+            if (currentState === "completed") {
+                return res.status(409).json({
+                    message: "Recognition already completed for this event. Use ?force=true to run again.",
+                    jobId,
+                    status: currentState
+                });
             }
         }
 
-        //store matches in FaceMatch collection
-        if (inserts.length > 0) {
-            await FaceMatch.insertMany(inserts, { ordered: false }).catch(err => {
-                if (err.code === 11000) {
-                    console.log("Some duplicate face matches were skipped");
-                } else {
-                    throw err;
-                }
-            });
-
-            return res.status(200).json({
-                message: "Face recognition completed",
-                matches: inserts.length,
-                details: matchedUsers
-            });
-        } else {
-            return res.status(200).json({ message: "No matching users found in the system.", matches: [] });
+        if (existingJob && force) {
+            await existingJob.remove();
         }
+
+        await faceRecognitionQueue.add(
+            "recognize-event",
+            {
+                eventId,
+                societyId: String(event.societyId),
+                requestedBy: String(req.user._id),
+                imageUrls
+            },
+            { jobId }
+        );
+
+        await RecognitionJob.findOneAndUpdate(
+            { jobId },
+            {
+                $set: {
+                    eventId,
+                    societyId: event.societyId,
+                    requestedBy: req.user._id,
+                    status: "queued",
+                    progress: 0,
+                    imageCount: imageUrls.length,
+                    attemptsMade: 0,
+                    error: null,
+                    startedAt: null,
+                    finishedAt: null,
+                    resultSummary: {
+                        imagesProcessed: 0,
+                        totalFacesDetected: 0,
+                        knownFacesFound: 0,
+                        insertedMatches: 0
+                    }
+                }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        return res.status(202).json({
+            message: "Face recognition queued successfully.",
+            jobId,
+            eventId,
+            imageCount: imageUrls.length
+        });
+
     } catch (err) {
-        console.error("Face recognition failed:", err);
-        return res.status(500).json({ message: "Face recognition process failed.", error: err.message });
+        console.error("Queueing face recognition failed:", err);
+        return res.status(500).json({ message: "Unable to queue face recognition job.", error: err.message });
     }
-}
+};
+
+exports.getFaceRecognitionJobStatus = async (req, res) => {
+    try {
+        const faceRecognitionQueue = getFaceRecognitionQueue();
+        const { jobId } = req.params;
+
+        const jobDoc = await RecognitionJob.findOne({ jobId }).lean();
+        if (!jobDoc) {
+            return res.status(404).json({ message: "Job not found." });
+        }
+
+        if (String(jobDoc.societyId) !== String(req.user.societyId)) {
+            return res.status(403).json({ message: "Job not in your society." });
+        }
+
+        const queueJob = await faceRecognitionQueue.getJob(jobId);
+        const queueState = queueJob ? await queueJob.getState() : null;
+        const queueProgress = queueJob ? queueJob.progress : null;
+
+        return res.status(200).json({
+            jobId,
+            eventId: jobDoc.eventId,
+            status: jobDoc.status,
+            progress: queueProgress ?? jobDoc.progress,
+            attemptsMade: jobDoc.attemptsMade,
+            imageCount: jobDoc.imageCount,
+            resultSummary: jobDoc.resultSummary,
+            error: jobDoc.error,
+            startedAt: jobDoc.startedAt,
+            finishedAt: jobDoc.finishedAt,
+            queueState
+        });
+    } catch (err) {
+        console.error("Fetching face recognition job status failed:", err);
+        return res.status(500).json({ message: "Unable to fetch job status.", error: err.message });
+    }
+};
+
+exports.listFaceRecognitionJobs = async (req, res) => {
+    try {
+        const query = { societyId: req.user.societyId };
+
+        if (req.query.eventId && mongoose.Types.ObjectId.isValid(req.query.eventId)) {
+            query.eventId = req.query.eventId;
+        }
+
+        const jobs = await RecognitionJob.find(query)
+            .sort({ createdAt: -1 })
+            .limit(Number(req.query.limit || 20))
+            .lean();
+
+        return res.status(200).json({ count: jobs.length, jobs });
+    } catch (err) {
+        console.error("Listing face recognition jobs failed:", err);
+        return res.status(500).json({ message: "Unable to list jobs.", error: err.message });
+    }
+};
+
+exports.getFaceRecognitionQueueMetrics = async (req, res) => {
+    try {
+        const faceRecognitionQueue = getFaceRecognitionQueue();
+        const counts = await faceRecognitionQueue.getJobCounts(
+            "waiting",
+            "active",
+            "completed",
+            "failed",
+            "delayed",
+            "paused"
+        );
+
+        const waitingThreshold = Number(process.env.FACE_RECOGNITION_WAITING_ALERT_THRESHOLD || 20);
+        const failedThreshold = Number(process.env.FACE_RECOGNITION_FAILED_ALERT_THRESHOLD || 5);
+
+        const alerts = {
+            backlogHigh: (counts.waiting || 0) >= waitingThreshold,
+            failureSpike: (counts.failed || 0) >= failedThreshold
+        };
+
+        return res.status(200).json({
+            queue: "face-recognition",
+            counts,
+            alerts,
+            thresholds: {
+                waitingThreshold,
+                failedThreshold
+            }
+        });
+
+    } catch (err) {
+        console.error("Fetching queue metrics failed:", err);
+        return res.status(500).json({ message: "Unable to fetch queue metrics.", error: err.message });
+    }
+};

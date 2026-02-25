@@ -5,6 +5,7 @@ import {
   deleteEvent,
   deleteEventImages,
   getEventDetails,
+  getRecognitionJobStatus,
   getMyMatches,
   getProfile,
   getSociety,
@@ -26,6 +27,8 @@ import './album.css';
 import './admin.css';
 
 const emptyStatus = { type: "", message: "" };
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const convertImageToJpeg = (file) => {
   return new Promise((resolve) => {
@@ -102,6 +105,27 @@ const convertImagesWithConcurrency = async (files, maxConcurrent = 3) => {
 
   await Promise.all(workers);
   return convertedFiles;
+};
+
+const pollRecognitionUntilFinished = async (jobId, options = {}) => {
+  const intervalMs = options.intervalMs || 3000;
+  const maxAttempts = options.maxAttempts || 120;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const job = await getRecognitionJobStatus(jobId);
+
+    if (job.status === "completed") {
+      return job;
+    }
+
+    if (job.status === "failed") {
+      throw new Error(job.error || "Recognition job failed.");
+    }
+
+    await sleep(intervalMs);
+  }
+
+  throw new Error("Recognition is still running. Please check again in a moment.");
 };
 
 const StatusBanner = ({ status }) => {
@@ -393,8 +417,19 @@ const App = () => {
 
     setBusy("recognize");
     try {
-      await runRecognition(selectedEventId);
-      setInfo("Recognition started! (This happens async)");
+      const queued = await runRecognition(selectedEventId);
+
+      if (!queued?.jobId) {
+        setInfo("Recognition request accepted.");
+        return;
+      }
+
+      setInfo("Recognition queued. Processing images now...");
+      const finalJob = await pollRecognitionUntilFinished(queued.jobId);
+
+      const insertedMatches = finalJob?.resultSummary?.insertedMatches || 0;
+      setInfo(`Recognition completed. ${insertedMatches} new matches saved.`);
+
       await handleSelectEvent(selectedEventId);
       await refreshMatches();
     } catch (err) {

@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node src/server.js",
     "test": "jest --runInBand",
-    "load": "node scripts/load-test.js"
+    "load": "node scripts/load-test.js",
+    "worker:face": "node src/workers/startFaceRecognitionWorker.js"
   },
   "keywords": [],
   "author": "",
@@ -14,12 +16,14 @@
   "dependencies": {
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.63.0",
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "ioredis": "^5.8.2",
     "mongoose": "^9.1.5",
     "multer": "^2.0.2"
   },

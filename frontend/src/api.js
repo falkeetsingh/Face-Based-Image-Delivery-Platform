@@ -121,4 +121,7 @@ export const runRecognition = (eventId) =>
     method: "POST"
   });
 
+export const getRecognitionJobStatus = (jobId) =>
+  request(`/api/events/recognition/jobs/${jobId}`);
+
 export const getMyMatches = () => request("/api/users/me/matches");
