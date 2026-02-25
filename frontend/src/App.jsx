@@ -22,6 +22,7 @@ import FloatingHeader from './components/mosaic/FloatingHeader';
 import FooterSection from './components/mosaic/FooterSection';
 import Masonry from './components/mosaic/Masonry';
 import BlackBG from './assets/BlackBG.jpg';
+import heic2any from "heic2any";
 import './login.css';
 import './album.css';
 import './admin.css';
@@ -30,9 +31,13 @@ const emptyStatus = { type: "", message: "" };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const convertImageToJpeg = (file) => {
-  return new Promise((resolve) => {
-    if (!file || !file.type.startsWith('image/')) {
+const convertImageToJpeg = async (file) => {
+  return new Promise(async (resolve) => {
+    // If not strictly an image, we still want to process if it's HEIC (some browsers lack 'image/heic' mime-type)
+    const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
+                   (file.name && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')));
+
+    if (!file || (!file.type.startsWith('image/') && !isHeic)) {
       resolve(file);
       return;
     }
@@ -40,6 +45,25 @@ const convertImageToJpeg = (file) => {
       resolve(file);
       return;
     }
+
+    let fileToProcess = file;
+
+    // Convert HEIC before feeding it to canvas
+    if (isHeic) {
+      try {
+        const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        fileToProcess = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+      } catch (err) {
+        console.error("HEIC Conversion error:", err);
+        resolve(file); // fail-safe fallback
+        return;
+      }
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -54,7 +78,7 @@ const convertImageToJpeg = (file) => {
         canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          resolve(file);
+          resolve(fileToProcess);
           return;
         }
         ctx.fillStyle = '#FFFFFF';
@@ -62,21 +86,21 @@ const convertImageToJpeg = (file) => {
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         canvas.toBlob((blob) => {
           if (!blob) {
-            resolve(file);
+            resolve(fileToProcess);
             return;
           }
-          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+          const newFile = new File([blob], fileToProcess.name.replace(/\.[^/.]+$/, "") + ".jpg", {
             type: 'image/jpeg',
             lastModified: Date.now()
           });
           resolve(newFile);
         }, 'image/jpeg', 0.9);
       };
-      img.onerror = () => resolve(file);
+      img.onerror = () => resolve(fileToProcess);
       img.src = e.target.result;
     };
-    reader.onerror = () => resolve(file);
-    reader.readAsDataURL(file);
+    reader.onerror = () => resolve(fileToProcess);
+    reader.readAsDataURL(fileToProcess);
   });
 };
 

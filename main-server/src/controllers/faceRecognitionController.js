@@ -54,6 +54,11 @@ exports.enqueueFaceRecognition = async (req, res) => {
                     status: currentState
                 });
             }
+
+            // If the job failed previously, we should remove it so it can be re-run cleanly
+            if (currentState === "failed") {
+                await existingJob.remove();
+            }
         }
 
         if (existingJob && force) {
