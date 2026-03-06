@@ -44,11 +44,34 @@ async function processRecognitionJob(job) {
     await job.updateProgress(10);
     logJob(job.id, "PROGRESS", 10);
 
+    const eligibleUsers = await User.find({
+        status: "active",
+        societyId: new mongoose.Types.ObjectId(societyId),
+        faceProfileId: { $exists: true, $nin: [null, ""] }
+    })
+        .select("_id faceProfileId")
+        .lean();
+
+    if (!eligibleUsers.length) {
+        throw new Error("No active users with registered faces found for this society.");
+    }
+
+    const candidateUserIds = eligibleUsers.map(user => String(user.faceProfileId));
+    const userByFaceProfileId = new Map(
+        eligibleUsers.map(user => [String(user.faceProfileId), user])
+    );
+
+    logJob(job.id, "ELIGIBLE_USERS_RESOLVED", {
+        eligibleUsers: eligibleUsers.length,
+        societyId
+    });
+
     logJob(job.id, "FACE_SERVER_REQUEST", { endpoint: "/api/events/recognize", eventId });
 
     const { data } = await faceServer.post("/api/events/recognize", {
         eventId,
-        imageUrls
+        imageUrls,
+        candidateUserIds
     });
 
     logJob(job.id, "FACE_SERVER_RESPONSE", {
@@ -66,15 +89,6 @@ async function processRecognitionJob(job) {
         totalMatchedUsers: matchedUsers.length,
         uniqueFaceProfiles: faceProfileIds.length
     });
-
-    const users = await User.find({
-        faceProfileId: { $in: faceProfileIds },
-        status: "active",
-        societyId: new mongoose.Types.ObjectId(societyId)
-    }).lean();
-    logJob(job.id, "USERS_RESOLVED", { eligibleUsers: users.length });
-
-    const userByFaceProfileId = new Map(users.map(user => [String(user.faceProfileId), user]));
 
     const operations = [];
     for (const match of matchedUsers) {

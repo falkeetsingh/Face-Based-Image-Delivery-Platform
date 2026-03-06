@@ -329,14 +329,16 @@ Processes multiple images from an event, detects all faces, compares them agains
   "imageUrls": [
     "https://example.com/photo1.jpg",
     "https://example.com/photo2.jpg"
-  ]
+  ],
+  "candidateUserIds": ["user123", "user456"]
 }
 ```
 
-| Field       | Type          | Required | Description                     |
-| ----------- | ------------- | -------- | ------------------------------- |
-| `eventId`   | String        | ✓        | Unique identifier for the event |
-| `imageUrls` | Array[String] | ✓        | Array of URLs to event images   |
+| Field              | Type          | Required | Description                                                              |
+| ------------------ | ------------- | -------- | ------------------------------------------------------------------------ |
+| `eventId`          | String        | ✓        | Unique identifier for the event                                          |
+| `imageUrls`        | Array[String] | ✓        | Array of URLs to event images                                            |
+| `candidateUserIds` | Array[String] | ✗        | Optional user ID scope; only these users are considered match candidates |
 
 **Legacy Support:** Also accepts `imageUrl` (single string) for backwards compatibility.
 
@@ -583,12 +585,16 @@ print(f"Found {result['summary']['knownFacesFound']} known faces")
 
 ### Adjusting Thresholds
 
-Edit the thresholds in [src/processEvent.js](src/processEvent.js#L6-L8):
+Override thresholds using environment variables (defaults shown in code):
 
 ```javascript
-const MAX_DISTANCE = 0.6; // Increase to accept looser matches
-const MIN_CONFIDENCE = 0.6; // Decrease to detect smaller faces
-const IOU_THRESHOLD = 0.3; // Decrease to remove more duplicates
+FACE_MAX_DISTANCE = 0.6;
+FACE_MIN_CONFIDENCE = 0.6;
+FACE_IOU_THRESHOLD = 0.3;
+FACE_MIN_FACE_AREA = 3600;
+FACE_AMBIGUITY_MARGIN = 0.04;
+FACE_TINY_INPUT_SIZE = 416;
+FACE_TINY_SCORE_THRESHOLD = 0.45;
 ```
 
 ---

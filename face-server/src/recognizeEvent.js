@@ -5,7 +5,7 @@ const FaceMatch = require('./models/FaceMatch.js');
 
 async function recognizeEvent(req, res) {
     try {
-        const { eventId, imageUrls } = req.body;
+        const { eventId, imageUrls, candidateUserIds } = req.body;
 
         // Support both single imageUrl and multiple imageUrls for backwards compatibility
         const urls = imageUrls || (req.body.imageUrl ? [req.body.imageUrl] : null);
@@ -14,8 +14,13 @@ async function recognizeEvent(req, res) {
             return res.status(400).json({ message: "eventId and imageUrls (array) are required" });
         }
 
-        //load all registered users and their face descriptors
-        const users = await User.find({});
+        // Optional user scoping from main-server to avoid cross-society candidate leakage
+        const userQuery = Array.isArray(candidateUserIds) && candidateUserIds.length > 0
+            ? { userId: { $in: candidateUserIds.map(id => String(id)) } }
+            : {};
+
+        //load registered users and their face descriptors
+        const users = await User.find(userQuery);
         const registeredUsers = users
             .map(u => ({
                 userId: u.userId,
@@ -35,6 +40,8 @@ async function recognizeEvent(req, res) {
         let allMatches = [];
         const allKnownMatches = [];
         const eventImages = [];
+        let successfulImages = 0;
+        let failedImages = 0;
 
         for (const imageUrl of urls) {
             try {
@@ -51,6 +58,7 @@ async function recognizeEvent(req, res) {
                 const matches = await processEvent(imageUrl, registeredUsers);
                 totalFacesDetected += matches.length;
                 allMatches.push(...matches);
+                successfulImages += 1;
 
                 //prepare face matches for database (add eventId to each match)
                 const knownMatches = matches
@@ -69,6 +77,7 @@ async function recognizeEvent(req, res) {
 
             } catch (imageError) {
                 console.error(`Error processing image ${imageUrl}:`, imageError.message);
+                failedImages += 1;
                 // Mark this image as having failed processing
                 const failedImage = eventImages.find(ei => ei.imageUrl === imageUrl);
                 if (failedImage) {
@@ -94,7 +103,8 @@ async function recognizeEvent(req, res) {
             })),
             summary: {
                 totalImages: urls.length,
-                successfulImages: eventImages.length,
+                successfulImages,
+                failedImages,
                 knownFacesFound: allKnownMatches.length
             }
         });

@@ -2,12 +2,20 @@ const axios = require('axios');
 const { Image } = require('canvas');
 const { faceapi } = require('./config/face-api');
 
-// Thresholds
-const MAX_DISTANCE = 0.52;
-const MIN_CONFIDENCE = 0.6;
-const IOU_THRESHOLD = 0.3;
-const MIN_FACE_AREA = 3600;
-const AMBIGUITY_MARGIN = 0.04;
+function getEnvNumber(name, defaultValue) {
+  const raw = process.env[name];
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+// Thresholds (override via env if needed)
+const MAX_DISTANCE = getEnvNumber('FACE_MAX_DISTANCE', 0.6);
+const MIN_CONFIDENCE = getEnvNumber('FACE_MIN_CONFIDENCE', 0.6);
+const IOU_THRESHOLD = getEnvNumber('FACE_IOU_THRESHOLD', 0.3);
+const MIN_FACE_AREA = getEnvNumber('FACE_MIN_FACE_AREA', 3600);
+const AMBIGUITY_MARGIN = getEnvNumber('FACE_AMBIGUITY_MARGIN', 0.04);
+const TINY_INPUT_SIZE = getEnvNumber('FACE_TINY_INPUT_SIZE', 416);
+const TINY_SCORE_THRESHOLD = getEnvNumber('FACE_TINY_SCORE_THRESHOLD', 0.45);
 
 async function ProcessEvent(imageUrl, registeredUsers) {
   // Download image with timeout and retry logic
@@ -46,7 +54,7 @@ async function ProcessEvent(imageUrl, registeredUsers) {
   let detections = await faceapi
     .detectAllFaces(
       img,
-      new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 })
+      new faceapi.TinyFaceDetectorOptions({ inputSize: TINY_INPUT_SIZE, scoreThreshold: TINY_SCORE_THRESHOLD })
     )
     .withFaceLandmarks(true)
     .withFaceDescriptors();
