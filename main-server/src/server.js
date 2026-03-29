@@ -4,6 +4,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const { generalRateLimiter, secureHeaders } = require("./middleware/securityMiddleware");
+const { createFaceRecognitionWorker } = require("./workers/faceRecognitionWorker");
 
 const app = express();
 
@@ -38,9 +39,38 @@ app.use('/api/events', require('./routes/eventImageRoutes'));
 app.use('/api/events', require('./routes/faceRecognitionRoutes'));
 
 const PORT = process.env.PORT || 5001;
+
+const shouldRunEmbeddedWorker =
+	String(process.env.RUN_FACE_WORKER_IN_API || "false").toLowerCase() === "true";
+
+async function startServer() {
+	await connectDB();
+
+	const server = app.listen(PORT, () => console.log(`Main Server running on port : ${PORT}`));
+
+	let embeddedWorker = null;
+	if (shouldRunEmbeddedWorker) {
+		embeddedWorker = createFaceRecognitionWorker();
+		console.log("Embedded face recognition worker started (RUN_FACE_WORKER_IN_API=true)");
+	}
+
+	const shutdown = async () => {
+		console.log("Shutting down main server...");
+		if (embeddedWorker) {
+			await embeddedWorker.close();
+		}
+		server.close(() => process.exit(0));
+	};
+
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
+}
+
 if (require.main === module) {
-	connectDB();
-	app.listen(PORT, () => console.log(`Main Server running on port : ${PORT}`));
+	startServer().catch((err) => {
+		console.error("Failed to start main server:", err);
+		process.exit(1);
+	});
 }
 
 module.exports = app;
