@@ -13,8 +13,10 @@ if (redisUrl) {
         host: parsed.hostname,
         port: Number(parsed.port || 6379),
         db: Number.isNaN(dbFromPath) ? 0 : dbFromPath,
-        username: parsed.username || process.env.REDIS_USERNAME || undefined,
-        password: parsed.password || process.env.REDIS_PASSWORD || undefined,
+        // Do not auto-trust URL username because many providers expose URL-like values
+        // that are not ACL usernames. Use REDIS_USERNAME only when explicitly required.
+        username: process.env.REDIS_USERNAME || undefined,
+        password: process.env.REDIS_PASSWORD || parsed.password || undefined,
         maxRetriesPerRequest: null
     };
 } else {
