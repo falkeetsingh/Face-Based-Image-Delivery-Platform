@@ -117,7 +117,7 @@ export const deleteEventImages = (eventId, imageIds) =>
   });
 
 export const runRecognition = (eventId) =>
-  request(`/api/events/${eventId}/recognize`, {
+  request(`/api/events/${eventId}/recognize?force=true`, {
     method: "POST"
   });
 

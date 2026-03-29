@@ -1,5 +1,11 @@
+const util = require('util');
+if (typeof util.isNullOrUndefined === 'undefined') {
+    util.isNullOrUndefined = function (obj) {
+        return obj === null || obj === undefined;
+    };
+}
 const path = require('path');
-const faceapi = require('face-api.js');
+const faceapi = require('@vladmandic/face-api');
 const { Canvas, Image, ImageData } = require('canvas');
 
 let tf;

@@ -11,13 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
-    "@tensorflow/tfjs-node": "^4.22.0",
+    "@tensorflow/tfjs": "^4.17.0",
+    "@tensorflow/tfjs-node": "^4.17.0",
+    "@vladmandic/face-api": "^1.7.15",
     "axios": "^1.13.2",
     "canvas": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "face-api.js": "^0.22.2",
     "mongoose": "^9.1.2",
     "nodemon": "^3.1.11"
   },
