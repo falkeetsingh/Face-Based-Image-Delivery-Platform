@@ -1,10 +1,11 @@
-const apiBase = import.meta.env.VITE_API_URL || "";
+const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 const buildUrl = (path) => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   if (apiBase) {
-    return `${apiBase}${path}`;
+    return `${apiBase}${normalizedPath}`;
   }
-  return path;
+  return normalizedPath;
 };
 
 const request = async (path, options = {}) => {
