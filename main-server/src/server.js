@@ -8,10 +8,27 @@ const { createFaceRecognitionWorker } = require("./workers/faceRecognitionWorker
 
 const app = express();
 
-const normalizeOrigin = (url) => (url || "").replace(/\/+$/, "");
+const normalizeOrigin = (url) => (url || "").trim().replace(/\/+$/, "");
+
+const allowedOrigins = String(process.env.CLIENT_URL || "http://localhost:5173")
+	.split(",")
+	.map((origin) => normalizeOrigin(origin))
+	.filter(Boolean);
 
 const corsOptions = {
-	origin: normalizeOrigin(process.env.CLIENT_URL) || "http://localhost:5173",
+	origin: (origin, callback) => {
+		// Allow non-browser requests (health checks, server-to-server).
+		if (!origin) {
+			return callback(null, true);
+		}
+
+		const normalizedRequestOrigin = normalizeOrigin(origin);
+		if (allowedOrigins.includes(normalizedRequestOrigin)) {
+			return callback(null, true);
+		}
+
+		return callback(new Error(`CORS blocked for origin: ${origin}`));
+	},
 	credentials: true
 };
 
