@@ -200,7 +200,7 @@ exports.login = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
@@ -241,7 +241,12 @@ exports.getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select("-password");
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            res.clearCookie("token", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none"
+            });
+            return res.status(401).json({ message: "Session invalid. Please log in again." });
         }
 
         const society = user.societyId
@@ -275,7 +280,7 @@ exports.logout = async (req, res) => {
         res.clearCookie("token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict"
+            sameSite: "none"
         });
 
         res.json({
